@@ -89,3 +89,8 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录和 `eva
 ```
 
 成功 episode 的 `failure_type` 为 `null`。task progress 相关字段先预留，当前还不会输出。
+
+## 项目修改日志
+
+- **2026-07-01**：创建代码仓库，完成第一版代码撰写，初步实现 D2A 核心功能。未 demo 测试，未 debug，未设置 task progress。
+

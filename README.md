@@ -89,3 +89,10 @@ Each JSONL row uses a flat evaluation schema:
 ```
 
 For successful episodes, `failure_type` is `null`. Task progress fields are reserved for later and are not emitted yet.
+
+## Project Changelog
+
+- **2026-07-01**:
+  - Created the code repository and completed the first draft of the code, with the core D2A functionality initially implemented.
+  - **Note**: No demo testing or debugging has been done yet, and task progress hasn't been set up.
+

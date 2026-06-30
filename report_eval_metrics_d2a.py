@@ -1,0 +1,44 @@
+"""Result writer and summary helpers inspired by AHA eval_metrics scripts."""
+
+from __future__ import annotations
+
+import json
+from collections import Counter
+from pathlib import Path
+from typing import Iterable
+
+from schemas_d2a import EpisodeResult
+
+
+def append_episode_jsonl(result: EpisodeResult, output_path: str | Path) -> Path:
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(result.to_dict(), ensure_ascii=False) + "\n")
+    return output_path
+
+
+def summarize_results(results: Iterable[EpisodeResult]) -> dict:
+    rows = list(results)
+    total = len(rows)
+    successes = sum(1 for row in rows if row.success)
+    failure_types = Counter()
+    for row in rows:
+        if row.success:
+            continue
+        failure_type = row.attribution.failure_type if row.attribution is not None else "unknown"
+        failure_types[failure_type] += 1
+    return {
+        "total": total,
+        "successes": successes,
+        "failures": total - successes,
+        "success_rate": successes / total if total else 0.0,
+        "failure_types": dict(failure_types),
+    }
+
+def write_summary(results: Iterable[EpisodeResult], output_path: str | Path) -> Path:
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as f:
+        json.dump(summarize_results(results), f, indent=2, ensure_ascii=False)
+    return output_path

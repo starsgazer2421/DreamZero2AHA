@@ -1,0 +1,6 @@
+# Paths are resolved relative to this DreamZero2AHA directory unless absolute.
+dreamzero_root: ../dreamzero
+aha_root: ../AHA
+
+# Default output root is resolved relative to this DreamZero2AHA directory.
+output_root: output

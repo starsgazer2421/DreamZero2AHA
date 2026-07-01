@@ -5,8 +5,8 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来把 DreamZero 仿真 
 核心思路是：
 
 1. DreamZero 在 `sim-evals` 中执行策略。
-2. 仿真状态提供规则式成功/失败判定。
-3. 失败 episode 被转换成 AHA 风格的多视角时间网格图。
+2. rollout 会被记录，但不做自动成功/失败判定。
+3. episode 被转换成 AHA 风格的多视角时间网格图。
 4. 网格图和 prompt 被保存成 AHA 评测插件可消费的归因样本。
 5. 每个 episode 的结果写入 JSONL。
 
@@ -21,7 +21,6 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来把 DreamZero 仿真 
 - `config_d2a.yaml`：可编辑的工程配置，记录 DreamZero 路径、AHA 路径和输出路径
 - `config_d2a.py`：配置加载器，负责读取 `config_d2a.yaml` 并解析相对/绝对路径
 - `run_sim_eval_d2a.py`：基于 DreamZero `eval_utils/run_sim_eval.py` 派生的评测入口
-- `success_checkers_droid_environment_d2a.py`：面向 sim-evals DROID 场景的成功判定
 - `trajectory_recorder_run_sim_eval_d2a.py`：DreamZero rollout 的相机和动作记录器
 - `process_data_grid_d2a.py`：参考 AHA `process_data.py` 的网格图生成器
 - `make_json_prompt_d2a.py`：参考 AHA `make_json.py` 的对话 JSON 生成器
@@ -64,15 +63,15 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
 - `--keyframes`：AHA 网格图采样的时间列数量
 - `--max-steps`：可选的单个 episode 最大步数；不填时使用环境默认 episode 长度
 - `--video-fps`：保存 rollout 视频的帧率
-- `--enable-aha-plugin` / `--no-enable-aha-plugin`：失败 episode 是否记录 AHA 评测插件元数据
+- `--enable-aha-plugin` / `--no-enable-aha-plugin`：是否记录 AHA 评测插件元数据
 
 默认输出会写到 `DreamZero2AHA/output/`，内容如下：
 
 - `episode_XXXX/frames/`
 - `episode_XXXX/steps.json`
 - `episode_XXXX/episode_N.mp4`
-- 失败时生成 `episode_XXXX/episode_N_aha_grid.jpg`
-- 失败时生成 `episode_XXXX/aha_request.json`
+- `episode_XXXX/episode_N_aha_grid.jpg`
+- `episode_XXXX/aha_request.json`
 - `episode_results.jsonl`
 
 每一行 JSONL 核心内容如下：
@@ -82,7 +81,7 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
   "episode": 0,
   "scene": 1,
   "prompt": "put the cube in the bowl",
-  "success": false,
+  "success": "unknown",
   "failure_type": "unknown",
   "video_path": "...",
   "aha_grid_path": "...",
@@ -90,7 +89,7 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
 }
 ```
 
-成功 episode 的 `failure_type` 为 `null`。task progress 相关字段先预留，当前还不会输出。
+当前关闭自动成功判定，每个 episode 的 `success` 都写为 `"unknown"`。task progress 相关字段先预留，当前还不会输出。
 
 ## 项目修改日志
 

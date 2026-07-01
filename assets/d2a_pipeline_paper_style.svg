@@ -82,10 +82,10 @@
 
   <!-- Success checker -->
   <rect class="box-green" x="1190" y="180" width="310" height="150" rx="12"/>
-  <text class="box-title" x="1245" y="225">Success Checker</text>
+  <text class="box-title" x="1245" y="225">Manual Review</text>
   <line x1="1220" y1="245" x2="1470" y2="245" stroke="#166534" stroke-width="1.4"/>
-  <text class="code" x="1210" y="275">success_checkers_droid</text>
-  <text class="code" x="1242" y="300">_environment_d2a.py</text>
+  <text class="code" x="1210" y="275">success = unknown</text>
+  <text class="code" x="1242" y="300">manual edit later</text>
 
   <!-- Recorder -->
   <rect class="box-green" x="1120" y="395" width="310" height="155" rx="12"/>
@@ -136,7 +136,7 @@
   <text class="green-label" x="1506" y="238">success</text>
 
   <path class="arrow-red" d="M1275 550 L1275 595 L580 595 L580 645"/>
-  <text class="red-label" x="610" y="575">failure episode</text>
+  <text class="red-label" x="610" y="575">episode artifacts</text>
   <path class="arrow-red" d="M705 715 L770 715"/>
   <path class="arrow-red" d="M1030 715 L1085 715"/>
   <path class="arrow-red" d="M1340 715 L1390 715"/>

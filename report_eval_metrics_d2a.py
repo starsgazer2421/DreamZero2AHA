@@ -21,17 +21,19 @@ def append_episode_jsonl(result: EpisodeResult, output_path: str | Path) -> Path
 def summarize_results(results: Iterable[EpisodeResult]) -> dict:
     rows = list(results)
     total = len(rows)
-    successes = sum(1 for row in rows if row.success)
+    successes = sum(1 for row in rows if row.success is True)
+    unknown = sum(1 for row in rows if row.success == "unknown")
     failure_types = Counter()
     for row in rows:
-        if row.success:
+        if row.success is True:
             continue
         failure_type = row.attribution.failure_type if row.attribution is not None else "unknown"
         failure_types[failure_type] += 1
     return {
         "total": total,
         "successes": successes,
-        "failures": total - successes,
+        "failures": total - successes - unknown,
+        "unknown": unknown,
         "success_rate": successes / total if total else 0.0,
         "failure_types": dict(failure_types),
     }

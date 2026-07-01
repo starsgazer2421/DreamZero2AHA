@@ -43,7 +43,6 @@ from make_json_prompt_d2a import build_aha_request, build_failure_prompt, write_
 from process_data_grid_d2a import build_aha_grid, sample_indices
 from report_eval_metrics_d2a import append_episode_jsonl
 from schemas_d2a import EpisodeResult
-from success_checkers_droid_environment_d2a import check_scene_success
 from trajectory_recorder_run_sim_eval_d2a import DreamZero2AHATrajectoryRecorder, extract_views_from_obs
 
 DreamZeroJointPosClient = dreamzero_run_sim_eval.DreamZeroJointPosClient
@@ -131,15 +130,12 @@ def main(
             episode_dir = run_dir / f"episode_{ep:04d}"
             recorder = DreamZero2AHATrajectoryRecorder(episode_dir)
             video = []
-            final_success = False
-            final_probe = {}
             end_reason = "max_steps"
 
             for step in tqdm(range(episode_max_steps), desc=f"Episode {ep + 1}/{episodes}", leave=True):
                 ret = client.infer(obs, task_prompt)
                 views = extract_views_from_obs(obs)
-                success_now, probe = check_scene_success(env, scene)
-                recorder.record_step(step, views, action=ret["action"], success_probe=probe)
+                recorder.record_step(step, views, action=ret["action"])
 
                 if not headless:
                     cv2.imshow("DreamZero2AHA", cv2.cvtColor(ret["viz"], cv2.COLOR_RGB2BGR))
@@ -148,11 +144,6 @@ def main(
 
                 action = torch.tensor(ret["action"])[None]
                 obs, _, term, trunc, _ = env.step(action)
-                if success_now:
-                    final_success = True
-                    final_probe = probe
-                elif not final_success:
-                    final_probe = probe
                 if term or trunc:
                     end_reason = "terminated" if term else "truncated"
                     break
@@ -161,34 +152,31 @@ def main(
             video_path = episode_dir / f"episode_{ep}.mp4"
             mediapy.write_video(video_path, video, fps=video_fps)
 
-            grid_path = None
-            request_path = None
+            sampled_frame_indices = sample_indices(len(recorder.records), keyframes)
+            recorder.write_frames(sampled_frame_indices)
+            grid_path = build_aha_grid(recorder.records, episode_dir / f"episode_{ep}_aha_grid.jpg", keyframes=keyframes)
+            request = build_aha_request(
+                request_id=f"scene{scene}_episode{ep}",
+                image_path=grid_path,
+                instruction=task_prompt,
+                scene=scene,
+            )
+            request_path = write_aha_request_json(request, episode_dir / "aha_request.json")
             attribution = None
-            if not final_success:
-                sampled_frame_indices = sample_indices(len(recorder.records), keyframes)
-                recorder.write_frames(sampled_frame_indices)
-                grid_path = build_aha_grid(recorder.records, episode_dir / f"episode_{ep}_aha_grid.jpg", keyframes=keyframes)
-                request = build_aha_request(
-                    request_id=f"scene{scene}_episode{ep}",
+            if enable_aha_plugin:
+                failure_prompt = build_failure_prompt(task_prompt, scene)
+                attribution = aha_plugin.record_failure_case(
                     image_path=grid_path,
-                    instruction=task_prompt,
-                    scene=scene,
+                    prompt=failure_prompt,
+                    request_json=request_path,
                 )
-                request_path = write_aha_request_json(request, episode_dir / "aha_request.json")
-                if enable_aha_plugin:
-                    failure_prompt = build_failure_prompt(task_prompt, scene)
-                    attribution = aha_plugin.record_failure_case(
-                        image_path=grid_path,
-                        prompt=failure_prompt,
-                        request_json=request_path,
-                    )
 
             recorder.write_steps_json()
             result = EpisodeResult(
                 episode=ep,
                 scene=scene,
                 prompt=task_prompt,
-                success=final_success,
+                success="unknown",
                 end_reason=end_reason,
                 steps=len(recorder.records),
                 output_dir=str(episode_dir),
@@ -196,7 +184,7 @@ def main(
                 aha_grid_path=str(grid_path) if grid_path else None,
                 aha_request_path=str(request_path) if request_path else None,
                 attribution=attribution,
-                success_probe=final_probe,
+                success_probe={},
             )
             append_episode_jsonl(result, results_path)
 

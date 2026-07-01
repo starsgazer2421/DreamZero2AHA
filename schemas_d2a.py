@@ -56,7 +56,7 @@ class EpisodeResult:
     episode: int
     scene: int
     prompt: str
-    success: bool
+    success: bool | Literal["unknown"]
     end_reason: str
     steps: int
     output_dir: str
@@ -68,7 +68,7 @@ class EpisodeResult:
 
     def to_dict(self) -> dict[str, Any]:
         failure_type = None
-        if not self.success and self.attribution is not None:
+        if self.success != True and self.attribution is not None:
             failure_type = self.attribution.failure_type
 
         return {

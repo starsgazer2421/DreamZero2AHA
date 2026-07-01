@@ -5,8 +5,8 @@ DreamZero2AHA is a non-invasive adapter project for evaluating DreamZero simulat
 The key idea is:
 
 1. DreamZero runs the policy in `sim-evals`.
-2. The simulator state provides a rule-based success/failure decision.
-3. Failed episodes are converted into AHA-style multi-view temporal grids.
+2. Rollouts are recorded without automatic success/failure judgment.
+3. Episodes are converted into AHA-style multi-view temporal grids.
 4. The grid and prompt are saved as AHA-ready evaluation artifacts.
 5. Results are written as per-episode JSONL files.
 
@@ -21,7 +21,6 @@ This project provides derivative adapter files whose names preserve the source c
 - `config_d2a.yaml`: editable project config for DreamZero path, AHA path, and output path
 - `config_d2a.py`: config loader that resolves relative/absolute paths from `config_d2a.yaml`
 - `run_sim_eval_d2a.py`: derivative runner based on DreamZero `eval_utils/run_sim_eval.py`
-- `success_checkers_droid_environment_d2a.py`: success probes for sim-evals DROID scenes
 - `trajectory_recorder_run_sim_eval_d2a.py`: camera/action recorder for DreamZero rollouts
 - `process_data_grid_d2a.py`: AHA-style grid builder inspired by AHA `process_data.py`
 - `make_json_prompt_d2a.py`: AHA conversation JSON builder inspired by AHA `make_json.py`
@@ -64,15 +63,15 @@ Useful runner arguments:
 - `--keyframes`: number of temporal columns sampled into the AHA grid
 - `--max-steps`: optional per-episode step cap; defaults to the environment max episode length
 - `--video-fps`: saved rollout video frame rate
-- `--enable-aha-plugin` / `--no-enable-aha-plugin`: whether to record AHA attribution plugin metadata for failed episodes
+- `--enable-aha-plugin` / `--no-enable-aha-plugin`: whether to record AHA attribution plugin metadata
 
 Outputs are written under `DreamZero2AHA/output/` by default and include:
 
 - `episode_XXXX/frames/`
 - `episode_XXXX/steps.json`
 - `episode_XXXX/episode_N.mp4`
-- `episode_XXXX/episode_N_aha_grid.jpg` for failures
-- `episode_XXXX/aha_request.json` for failures
+- `episode_XXXX/episode_N_aha_grid.jpg`
+- `episode_XXXX/aha_request.json`
 - `episode_results.jsonl`
 
 Each JSONL row uses a flat evaluation schema:
@@ -82,7 +81,7 @@ Each JSONL row uses a flat evaluation schema:
   "episode": 0,
   "scene": 1,
   "prompt": "put the cube in the bowl",
-  "success": false,
+  "success": "unknown",
   "failure_type": "unknown",
   "video_path": "...",
   "aha_grid_path": "...",
@@ -90,7 +89,7 @@ Each JSONL row uses a flat evaluation schema:
 }
 ```
 
-For successful episodes, `failure_type` is `null`. Task progress fields are reserved for later and are not emitted yet.
+Automatic success checking is disabled. Each episode is written with `"success": "unknown"`. Task progress fields are reserved for later and are not emitted yet.
 
 ## Project Changelog
 

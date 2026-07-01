@@ -19,6 +19,7 @@ import gymnasium as gym
 import mediapy
 import torch
 import tyro
+from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -80,6 +81,7 @@ def main(
     max_steps: int | None = None,
     video_fps: int = 15,
     enable_aha_plugin: bool = True,
+    show_progress: bool = True,
 ):
     if not D2A_CONFIG.dreamzero_root.exists():
         raise FileNotFoundError(f"DreamZero repository not found: {D2A_CONFIG.dreamzero_root}")
@@ -134,7 +136,11 @@ def main(
             final_probe = {}
             end_reason = "max_steps"
 
-            for step in range(episode_max_steps):
+            step_iter = range(episode_max_steps)
+            if show_progress:
+                step_iter = tqdm(step_iter, desc=f"Episode {ep + 1}/{episodes}", leave=True)
+
+            for step in step_iter:
                 ret = client.infer(obs, task_prompt)
                 views = extract_views_from_obs(obs)
                 success_now, probe = check_scene_success(env, scene)

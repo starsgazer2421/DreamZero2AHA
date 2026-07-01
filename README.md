@@ -65,6 +65,7 @@ Useful runner arguments:
 - `--max-steps`: optional per-episode step cap; defaults to the environment max episode length
 - `--video-fps`: saved rollout video frame rate
 - `--enable-aha-plugin` / `--no-enable-aha-plugin`: whether to record AHA attribution plugin metadata for failed episodes
+- `--show-progress` / `--no-show-progress`: whether to show a per-episode step progress bar
 
 Outputs are written under `DreamZero2AHA/output/` by default and include:
 

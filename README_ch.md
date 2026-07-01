@@ -65,6 +65,7 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
 - `--max-steps`：可选的单个 episode 最大步数；不填时使用环境默认 episode 长度
 - `--video-fps`：保存 rollout 视频的帧率
 - `--enable-aha-plugin` / `--no-enable-aha-plugin`：失败 episode 是否记录 AHA 评测插件元数据
+- `--show-progress` / `--no-show-progress`：是否显示每个 episode 的 step 进度条
 
 默认输出会写到 `DreamZero2AHA/output/`，内容如下：
 

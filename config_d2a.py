@@ -13,7 +13,6 @@ DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config_d2a.yaml"
 @dataclass(frozen=True)
 class D2AConfig:
     dreamzero_root: Path
-    aha_root: Path
     output_root: Path
     config_path: Path
 
@@ -50,7 +49,6 @@ def load_d2a_config(config_path: str | Path | None = None) -> D2AConfig:
     data = _parse_simple_yaml(path)
     base_dir = path.parent
     dreamzero_root = _resolve_path(data.get("dreamzero_root", "../DreamZero/dreamzero"), base_dir=base_dir)
-    aha_root = _resolve_path(data.get("aha_root", "../DreamZero/AHA"), base_dir=base_dir)
     output_root = Path(data.get("output_root", "output")).expanduser()
     if output_root.is_absolute():
         resolved_output_root = output_root
@@ -59,7 +57,6 @@ def load_d2a_config(config_path: str | Path | None = None) -> D2AConfig:
 
     return D2AConfig(
         dreamzero_root=dreamzero_root,
-        aha_root=aha_root,
         output_root=resolved_output_root.resolve(),
         config_path=path.resolve(),
     )

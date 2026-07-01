@@ -1,4 +1,4 @@
-"""DreamZero simulation evaluation with AHA-style failure attribution.
+"""DreamZero simulation evaluation with attribution-ready evidence export.
 
 This is a non-invasive derivative of eval_utils/run_sim_eval.py. It imports the
 DreamZero policy client from the source file and keeps new evaluation logic in
@@ -39,8 +39,7 @@ for path in (DREAMZERO_ROOT, EVAL_UTILS_ROOT, SIM_EVALS_SRC):
         sys.path.insert(0, path_text)
 
 from eval_utils import run_sim_eval as dreamzero_run_sim_eval
-from aha_failure_attribution_plugin_d2a import make_aha_failure_attribution_plugin
-from make_json_prompt_d2a import build_aha_request, build_failure_prompt, write_aha_request_json
+from make_json_prompt_d2a import build_aha_request, write_aha_request_json
 from process_data_grid_d2a import build_aha_grid, sample_indices
 from report_eval_metrics_d2a import append_episode_json
 from schemas_d2a import EpisodeResult
@@ -80,12 +79,9 @@ def main(
     keyframes: int = 12,
     max_steps: int | None = None,
     video_fps: int = 15,
-    enable_aha_plugin: bool = True,
 ):
     if not D2A_CONFIG.dreamzero_root.exists():
         raise FileNotFoundError(f"DreamZero repository not found: {D2A_CONFIG.dreamzero_root}")
-    if not D2A_CONFIG.aha_root.exists():
-        raise FileNotFoundError(f"AHA repository not found: {D2A_CONFIG.aha_root}")
     os.chdir(D2A_CONFIG.dreamzero_root)
 
     from isaaclab.app import AppLauncher
@@ -111,7 +107,6 @@ def main(
     resolved_port = port if port is not None else dreamzero_main_default("port", 6000)
     print(f"[D2A] Connecting to DreamZero policy server at {resolved_host}:{resolved_port}")
     client = DreamZeroJointPosClient(remote_host=resolved_host, remote_port=resolved_port)
-    aha_plugin = make_aha_failure_attribution_plugin()
 
     if output_root:
         output_base_arg = Path(output_root).expanduser()
@@ -164,14 +159,6 @@ def main(
                 scene=scene,
             )
             request_path = write_aha_request_json(request, episode_dir / "aha_request.json")
-            attribution = None
-            if enable_aha_plugin:
-                failure_prompt = build_failure_prompt(task_prompt, scene)
-                attribution = aha_plugin.record_failure_case(
-                    image_path=grid_path,
-                    prompt=failure_prompt,
-                    request_json=request_path,
-                )
 
             recorder.write_steps_json()
             result = EpisodeResult(
@@ -185,7 +172,6 @@ def main(
                 video_path=str(video_path),
                 aha_grid_path=str(grid_path) if grid_path else None,
                 aha_request_path=str(request_path) if request_path else None,
-                attribution=attribution,
                 success_probe={},
             )
             append_episode_json(result, results_path)

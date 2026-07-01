@@ -40,8 +40,7 @@ def summarize_results(results: Iterable[EpisodeResult]) -> dict:
     for row in rows:
         if row.success is True:
             continue
-        failure_type = row.attribution.failure_type if row.attribution is not None else "unknown"
-        failure_types[failure_type] += 1
+        failure_types["unknown"] += 1
     return {
         "total": total,
         "successes": successes,

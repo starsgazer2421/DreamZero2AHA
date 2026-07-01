@@ -107,10 +107,10 @@
   <text class="code" x="805" y="767">make_json_prompt_d2a.py</text>
 
   <rect class="dash-red" x="1085" y="630" width="255" height="165" rx="12"/>
-  <text class="box-title-red" x="1138" y="682">AHA / VLM</text>
-  <text class="box-title-red" x="1118" y="714">AHA Plugin</text>
+  <text class="box-title-red" x="1122" y="682">Offline Failure</text>
+  <text class="box-title-red" x="1148" y="714">Annotation</text>
   <line x1="1115" y1="735" x2="1310" y2="735" stroke="#b91c1c" stroke-width="1.4"/>
-  <text class="code" x="1075" y="767">aha_failure_attribution_plugin_d2a.py</text>
+  <text class="code" x="1122" y="767">annotate_failure_d2a.py</text>
 
   <!-- Results -->
   <rect class="box-purple" x="1390" y="600" width="165" height="230" rx="12"/>
@@ -119,7 +119,7 @@
   <text class="code" x="1405" y="695">report_eval</text>
   <text class="code" x="1406" y="717">_metrics_d2a.py</text>
   <text class="small" x="1412" y="775">episode_results.json</text>
-  <text class="small" x="1438" y="800">+ videos + grids</text>
+  <text class="small" x="1402" y="800">failure_annotations.json</text>
 
   <!-- Arrows -->
   <path class="arrow" d="M615 220 L615 300"/>
@@ -140,5 +140,5 @@
   <path class="arrow-red" d="M705 715 L770 715"/>
   <path class="arrow-red" d="M1030 715 L1085 715"/>
   <path class="arrow-red" d="M1340 715 L1390 715"/>
-  <text class="red-label" x="1348" y="696">failure reason</text>
+  <text class="red-label" x="1348" y="696">failure type</text>
 </svg>

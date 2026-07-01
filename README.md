@@ -1,6 +1,6 @@
 # DreamZero2AHA
 
-DreamZero2AHA is a non-invasive adapter project for evaluating DreamZero simulation rollouts with AHA-style failure attribution.
+DreamZero2AHA is a non-invasive adapter project for exporting attribution-ready evidence from DreamZero simulation rollouts.
 
 The key idea is:
 
@@ -12,21 +12,21 @@ The key idea is:
 
 ## Pipeline
 
-![DreamZero2AHA pipeline](assets/d2a_pipeline_paper_style.png)
+![DreamZero2AHA pipeline](assets/d2a_pipeline_paper_style.svg)
 
 ## Project Contents
 
 This project provides derivative adapter files whose names preserve the source context:
 
-- `config_d2a.yaml`: editable project config for DreamZero path, AHA path, and output path
+- `config_d2a.yaml`: editable project config for the DreamZero path and output path
 - `config_d2a.py`: config loader that resolves relative/absolute paths from `config_d2a.yaml`
 - `run_sim_eval_d2a.py`: derivative runner based on DreamZero `eval_utils/run_sim_eval.py`
 - `trajectory_recorder_run_sim_eval_d2a.py`: camera/action recorder for DreamZero rollouts
 - `process_data_grid_d2a.py`: AHA-style grid builder inspired by AHA `process_data.py`
 - `make_json_prompt_d2a.py`: AHA conversation JSON builder inspired by AHA `make_json.py`
-- `aha_failure_attribution_plugin_d2a.py`: AHA-style failure attribution plugin glue
+- `annotate_failure_d2a.py`: offline interactive annotation helper for success, task progress, and failure type
 - `report_eval_metrics_d2a.py`: JSON result and summary helpers
-- `schemas_d2a.py`: shared dataclasses for step records, attribution metadata, and episode results
+- `schemas_d2a.py`: shared dataclasses for step records and episode results
 
 **Note**: This project does not include the environment setup code for DreamZero and AHA. Please refer to their respective original repositories for environment configuration and activation instructions.
 
@@ -36,11 +36,10 @@ Check `config_d2a.yaml` first:
 
 ```yaml
 dreamzero_root: ../DreamZero/dreamzero
-aha_root: ../DreamZero/AHA
 output_root: output
 ```
 
-`dreamzero_root`, `aha_root`, and `output_root` are resolved relative to this `DreamZero2AHA` directory unless they are absolute paths.
+`dreamzero_root` and `output_root` are resolved relative to this `DreamZero2AHA` directory unless they are absolute paths.
 
 After starting the DreamZero policy server on the server machine, run the client-side evaluator:
 
@@ -63,7 +62,6 @@ Useful runner arguments:
 - `--keyframes`: number of temporal columns sampled into the AHA grid
 - `--max-steps`: optional per-episode step cap; defaults to the environment max episode length
 - `--video-fps`: saved rollout video frame rate
-- `--enable-aha-plugin` / `--no-enable-aha-plugin`: whether to record AHA attribution plugin metadata
 
 Outputs are written under `DreamZero2AHA/output/` by default and include:
 

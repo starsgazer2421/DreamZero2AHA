@@ -52,7 +52,7 @@ python run_sim_eval_d2a.py \
   --prompt "put the cube in the bowl"
 ```
 
-runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录和 `eval_utils/sim-evals/src` 加入 `PYTHONPATH`，然后在启动 IsaacLab 前切换工作目录到 DreamZero 根目录。这样 DreamZero 的 assets 和原评测代码中的相对路径仍然兼容。
+runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval_utils` 和 `eval_utils/sim-evals/src` 加入 `PYTHONPATH`，然后在启动 IsaacLab 前切换工作目录到 DreamZero 根目录。这样 DreamZero 的 assets 和原评测代码中的相对路径仍然兼容。
 
 常用参数：
 
@@ -95,4 +95,3 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录和 `eva
 ## 项目修改日志
 
 - **2026-07-01**：创建代码仓库，完成第一版代码撰写，初步实现 D2A 格式适配。未在主流程实现 AHA 失败归因逻辑，未 demo 测试，未 debug，未设置 task progress。
-

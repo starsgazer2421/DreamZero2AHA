@@ -52,7 +52,7 @@ python run_sim_eval_d2a.py \
   --prompt "put the cube in the bowl"
 ```
 
-The runner reads `config_d2a.yaml`, adds the configured DreamZero root and `eval_utils/sim-evals/src` to `PYTHONPATH`, then switches the working directory to the DreamZero root before launching IsaacLab. This keeps DreamZero assets and relative paths compatible with the original evaluation code.
+The runner reads `config_d2a.yaml`, adds the configured DreamZero root, `eval_utils`, and `eval_utils/sim-evals/src` to `PYTHONPATH`, then switches the working directory to the DreamZero root before launching IsaacLab. This keeps DreamZero assets and relative paths compatible with the original evaluation code.
 
 Useful runner arguments:
 

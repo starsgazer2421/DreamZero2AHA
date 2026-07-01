@@ -27,9 +27,10 @@ from config_d2a import load_d2a_config
 
 D2A_CONFIG = load_d2a_config()
 DREAMZERO_ROOT = D2A_CONFIG.dreamzero_root
+EVAL_UTILS_ROOT = DREAMZERO_ROOT / "eval_utils"
 SIM_EVALS_SRC = DREAMZERO_ROOT / "eval_utils" / "sim-evals" / "src"
 
-for path in (DREAMZERO_ROOT, SIM_EVALS_SRC):
+for path in (DREAMZERO_ROOT, EVAL_UTILS_ROOT, SIM_EVALS_SRC):
     path_text = str(path)
     if path_text not in sys.path:
         sys.path.insert(0, path_text)

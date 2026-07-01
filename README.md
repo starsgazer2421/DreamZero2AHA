@@ -8,7 +8,10 @@ The key idea is:
 2. Rollouts are recorded without automatic success/failure judgment.
 3. Episodes are converted into AHA-style multi-view temporal grids.
 4. The grid and prompt are saved as AHA-ready evaluation artifacts.
-5. Results are written as a per-run JSON file.
+5. Failure labels are added later with an offline annotation pass.
+6. Results are written as JSON files for analysis.
+
+Current attribution source: the rollout runner does not execute AHA code directly. It exports AHA-style evidence (`aha_grid.jpg` and `aha_request.json`), then `annotate_failure_d2a.py` records offline labels for success, task progress, and failure type. The `aha_root` config entry is kept as an optional pointer for provenance and future AHA/VLM attribution scripts, but it is not required to run DreamZero rollouts.
 
 ## Pipeline
 
@@ -18,7 +21,7 @@ The key idea is:
 
 This project provides derivative adapter files whose names preserve the source context:
 
-- `config_d2a.yaml`: editable project config for the DreamZero path and output path
+- `config_d2a.yaml`: editable project config for DreamZero, optional AHA, and output paths
 - `config_d2a.py`: config loader that resolves relative/absolute paths from `config_d2a.yaml`
 - `run_sim_eval_d2a.py`: derivative runner based on DreamZero `eval_utils/run_sim_eval.py`
 - `trajectory_recorder_run_sim_eval_d2a.py`: camera/action recorder for DreamZero rollouts
@@ -36,10 +39,11 @@ Check `config_d2a.yaml` first:
 
 ```yaml
 dreamzero_root: ../DreamZero/dreamzero
+aha_root: ../AHA
 output_root: output
 ```
 
-`dreamzero_root` and `output_root` are resolved relative to this `DreamZero2AHA` directory unless they are absolute paths.
+`dreamzero_root`, `aha_root`, and `output_root` are resolved relative to this `DreamZero2AHA` directory unless they are absolute paths. `aha_root` is optional for the current runner and is not checked at startup.
 
 After starting the DreamZero policy server on the server machine, run the client-side evaluator:
 
@@ -71,6 +75,7 @@ Outputs are written under `DreamZero2AHA/output/` by default and include:
 - `episode_XXXX/episode_N_aha_grid.jpg`
 - `episode_XXXX/aha_request.json`
 - `episode_results.json`
+- `failure_annotations.json` after running `annotate_failure_d2a.py`
 
 Each episode entry uses a flat evaluation schema:
 
@@ -88,6 +93,12 @@ Each episode entry uses a flat evaluation schema:
 ```
 
 Automatic success checking is disabled. Each episode is written with `"success": "unknown"`. Task progress fields are reserved for later and are not emitted yet.
+
+After the rollout finishes, annotate episodes offline:
+
+```bash
+python annotate_failure_d2a.py --results output/.../episode_results.json --open-artifacts
+```
 
 ## Project Changelog
 

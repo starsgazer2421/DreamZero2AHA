@@ -8,7 +8,10 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来从 DreamZero 仿真 
 2. rollout 会被记录，但不做自动成功/失败判定。
 3. episode 被转换成 AHA 风格的多视角时间网格图。
 4. 网格图和 prompt 被保存成 AHA 风格的离线评测样本。
-5. 每个 episode 的结果写入同一个 JSON 文件。
+5. 失败标签后续通过离线标注流程补充。
+6. 结果写入 JSON 文件，供后续分析使用。
+
+当前失败归因来源：rollout runner 不会直接执行 AHA 仓库代码。它会导出 AHA 风格证据（`aha_grid.jpg` 和 `aha_request.json`），然后由 `annotate_failure_d2a.py` 离线记录成功状态、任务进度和失败类型。`aha_root` 配置项作为可选路径保留，用于说明来源和后续接入 AHA/VLM 自动归因脚本；当前运行 DreamZero rollout 时不依赖它。
 
 ## 流程图
 
@@ -18,7 +21,7 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来从 DreamZero 仿真 
 
 这里新增的是派生适配文件，文件名保留来源语义：
 
-- `config_d2a.yaml`：可编辑的工程配置，记录 DreamZero 路径和输出路径
+- `config_d2a.yaml`：可编辑的工程配置，记录 DreamZero、可选 AHA 和输出路径
 - `config_d2a.py`：配置加载器，负责读取 `config_d2a.yaml` 并解析相对/绝对路径
 - `run_sim_eval_d2a.py`：基于 DreamZero `eval_utils/run_sim_eval.py` 派生的评测入口
 - `trajectory_recorder_run_sim_eval_d2a.py`：DreamZero rollout 的相机和动作记录器
@@ -36,10 +39,11 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来从 DreamZero 仿真 
 
 ```yaml
 dreamzero_root: ../DreamZero/dreamzero
+aha_root: ../AHA
 output_root: output
 ```
 
-`dreamzero_root` 和 `output_root` 默认相对于 `DreamZero2AHA` 目录解析；如果写绝对路径，就直接使用绝对路径。
+`dreamzero_root`、`aha_root` 和 `output_root` 默认相对于 `DreamZero2AHA` 目录解析；如果写绝对路径，就直接使用绝对路径。当前 runner 不会在启动时检查 `aha_root`。
 
 在 server 端启动 DreamZero policy server 后，在 client 端执行：
 
@@ -71,6 +75,7 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
 - `episode_XXXX/episode_N_aha_grid.jpg`
 - `episode_XXXX/aha_request.json`
 - `episode_results.json`
+- 运行 `annotate_failure_d2a.py` 后生成的 `failure_annotations.json`
 
 每个 episode 条目的核心内容如下：
 
@@ -88,6 +93,12 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
 ```
 
 当前关闭自动成功判定，每个 episode 的 `success` 都写为 `"unknown"`。task progress 相关字段先预留，当前还不会输出。
+
+rollout 结束后，可以离线标注 episode：
+
+```bash
+python annotate_failure_d2a.py --results output/.../episode_results.json --open-artifacts
+```
 
 ## 项目修改日志
 

@@ -1,5 +1,9 @@
 # Paths are resolved relative to this DreamZero2AHA directory unless absolute.
 dreamzero_root: ../DreamZero/dreamzero
 
+# Optional. Current D2A runner does not call AHA code directly; this path is
+# kept for provenance and future offline AHA/VLM attribution scripts.
+aha_root: ../AHA
+
 # Default output root is resolved relative to this DreamZero2AHA directory.
 output_root: output

@@ -29,6 +29,8 @@ This project provides derivative adapter files whose names preserve the source c
 - `report_eval_metrics_d2a.py`: JSONL and summary helpers
 - `schemas_d2a.py`: shared dataclasses for step records, attribution metadata, and JSONL episode results
 
+**Note**: This project does not include the environment setup code for DreamZero and AHA. Please refer to their respective original repositories for environment configuration and activation instructions.
+
 ## How to Start
 
 Check `config_d2a.yaml` first:
@@ -44,7 +46,7 @@ output_root: output
 After starting the DreamZero policy server on the server machine, run the client-side evaluator:
 
 ```bash
-python DreamZero2AHA/run_sim_eval_d2a.py \
+python run_sim_eval_d2a.py \
   --episodes 10 \
   --scene 1 \
   --prompt "put the cube in the bowl"
@@ -92,7 +94,4 @@ For successful episodes, `failure_type` is `null`. Task progress fields are rese
 
 ## Project Changelog
 
-- **2026-07-01**:
-  - Created the code repository and completed the first draft of the code, with the core D2A functionality initially implemented.
-  - **Note**: No demo testing or debugging has been done yet, and task progress hasn't been set up.
-
+- **2026-07-01**: Created the code repository, completed the first draft of the code, and initially implemented D2A format adaptation. AHA failure attribution is not implemented in the main pipeline yet. Demo testing, debugging, and task progress setup have not been completed.

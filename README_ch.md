@@ -29,6 +29,8 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来把 DreamZero 仿真 
 - `report_eval_metrics_d2a.py`：JSONL 和汇总工具
 - `schemas_d2a.py`：共享数据结构，定义 step 记录、归因元数据和 JSONL episode 结果
 
+**注**：本工程不包含DreamZero和AHA的环境配置代码，各自环境配置与激活详见原仓库。
+
 ## 运行方法
 
 先检查 `config_d2a.yaml`：
@@ -44,7 +46,7 @@ output_root: output
 在 server 端启动 DreamZero policy server 后，在 client 端执行：
 
 ```bash
-python DreamZero2AHA/run_sim_eval_d2a.py \
+python run_sim_eval_d2a.py \
   --episodes 10 \
   --scene 1 \
   --prompt "put the cube in the bowl"
@@ -92,5 +94,5 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录和 `eva
 
 ## 项目修改日志
 
-- **2026-07-01**：创建代码仓库，完成第一版代码撰写，初步实现 D2A 核心功能。未 demo 测试，未 debug，未设置 task progress。
+- **2026-07-01**：创建代码仓库，完成第一版代码撰写，初步实现 D2A 格式适配。未在主流程实现 AHA 失败归因逻辑，未 demo 测试，未 debug，未设置 task progress。
 

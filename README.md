@@ -8,7 +8,7 @@ The key idea is:
 2. Rollouts are recorded without automatic success/failure judgment.
 3. Episodes are converted into AHA-style multi-view temporal grids.
 4. The grid and prompt are saved as AHA-ready evaluation artifacts.
-5. Results are written as per-episode JSONL files.
+5. Results are written as a per-run JSON file.
 
 ## Pipeline
 
@@ -25,8 +25,8 @@ This project provides derivative adapter files whose names preserve the source c
 - `process_data_grid_d2a.py`: AHA-style grid builder inspired by AHA `process_data.py`
 - `make_json_prompt_d2a.py`: AHA conversation JSON builder inspired by AHA `make_json.py`
 - `aha_failure_attribution_plugin_d2a.py`: AHA-style failure attribution plugin glue
-- `report_eval_metrics_d2a.py`: JSONL and summary helpers
-- `schemas_d2a.py`: shared dataclasses for step records, attribution metadata, and JSONL episode results
+- `report_eval_metrics_d2a.py`: JSON result and summary helpers
+- `schemas_d2a.py`: shared dataclasses for step records, attribution metadata, and episode results
 
 **Note**: This project does not include the environment setup code for DreamZero and AHA. Please refer to their respective original repositories for environment configuration and activation instructions.
 
@@ -72,9 +72,9 @@ Outputs are written under `DreamZero2AHA/output/` by default and include:
 - `episode_XXXX/episode_N.mp4`
 - `episode_XXXX/episode_N_aha_grid.jpg`
 - `episode_XXXX/aha_request.json`
-- `episode_results.jsonl`
+- `episode_results.json`
 
-Each JSONL row uses a flat evaluation schema:
+Each episode entry uses a flat evaluation schema:
 
 ```json
 {
@@ -94,4 +94,3 @@ Automatic success checking is disabled. Each episode is written with `"success":
 ## Project Changelog
 
 - **2026-06-30**: Created the code repository, completed the first draft of the code, and initially implemented D2A format adaptation. AHA failure attribution is not implemented in the main pipeline yet. Demo testing, debugging, and task progress setup have not been completed.
-

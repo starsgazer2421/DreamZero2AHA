@@ -42,7 +42,7 @@ from eval_utils import run_sim_eval as dreamzero_run_sim_eval
 from aha_failure_attribution_plugin_d2a import make_aha_failure_attribution_plugin
 from make_json_prompt_d2a import build_aha_request, build_failure_prompt, write_aha_request_json
 from process_data_grid_d2a import build_aha_grid, sample_indices
-from report_eval_metrics_d2a import append_episode_jsonl
+from report_eval_metrics_d2a import append_episode_json
 from schemas_d2a import EpisodeResult
 from trajectory_recorder_run_sim_eval_d2a import DreamZero2AHATrajectoryRecorder, extract_views_from_obs
 
@@ -122,7 +122,7 @@ def main(
     run_started_at = datetime.now(BEIJING_TZ)
     run_dir = output_base / run_started_at.strftime("%Y-%m-%d") / run_started_at.strftime("%H-%M-%S")
     run_dir.mkdir(parents=True, exist_ok=True)
-    results_path = run_dir / "episode_results.jsonl"
+    results_path = run_dir / "episode_results.json"
     episode_max_steps = max_steps or env.env.max_episode_length
 
     with torch.no_grad():
@@ -188,7 +188,7 @@ def main(
                 attribution=attribution,
                 success_probe={},
             )
-            append_episode_jsonl(result, results_path)
+            append_episode_json(result, results_path)
 
     env.close()
     simulation_app.close()

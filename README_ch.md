@@ -8,7 +8,7 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来把 DreamZero 仿真 
 2. rollout 会被记录，但不做自动成功/失败判定。
 3. episode 被转换成 AHA 风格的多视角时间网格图。
 4. 网格图和 prompt 被保存成 AHA 评测插件可消费的归因样本。
-5. 每个 episode 的结果写入 JSONL。
+5. 每个 episode 的结果写入同一个 JSON 文件。
 
 ## 流程图
 
@@ -25,8 +25,8 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来把 DreamZero 仿真 
 - `process_data_grid_d2a.py`：参考 AHA `process_data.py` 的网格图生成器
 - `make_json_prompt_d2a.py`：参考 AHA `make_json.py` 的对话 JSON 生成器
 - `aha_failure_attribution_plugin_d2a.py`：AHA 风格失败归因评测插件适配层
-- `report_eval_metrics_d2a.py`：JSONL 和汇总工具
-- `schemas_d2a.py`：共享数据结构，定义 step 记录、归因元数据和 JSONL episode 结果
+- `report_eval_metrics_d2a.py`：JSON 结果和汇总工具
+- `schemas_d2a.py`：共享数据结构，定义 step 记录、归因元数据和 episode 结果
 
 **注**：本工程不包含DreamZero和AHA的环境配置代码，各自环境配置与激活详见原仓库。
 
@@ -72,9 +72,9 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
 - `episode_XXXX/episode_N.mp4`
 - `episode_XXXX/episode_N_aha_grid.jpg`
 - `episode_XXXX/aha_request.json`
-- `episode_results.jsonl`
+- `episode_results.json`
 
-每一行 JSONL 核心内容如下：
+每个 episode 条目的核心内容如下：
 
 ```json
 {

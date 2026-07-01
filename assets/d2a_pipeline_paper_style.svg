@@ -118,7 +118,7 @@
   <line x1="1410" y1="665" x2="1535" y2="665" stroke="#5b2a86" stroke-width="1.4"/>
   <text class="code" x="1405" y="695">report_eval</text>
   <text class="code" x="1406" y="717">_metrics_d2a.py</text>
-  <text class="small" x="1412" y="775">episode_results.jsonl</text>
+  <text class="small" x="1412" y="775">episode_results.json</text>
   <text class="small" x="1438" y="800">+ videos + grids</text>
 
   <!-- Arrows -->

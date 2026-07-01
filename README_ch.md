@@ -59,7 +59,7 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
 - `--episodes`：运行的仿真 episode 数量
 - `--scene`：sim-evals DROID 场景编号，目前对应 `1`、`2`、`3`
 - `--prompt`：发送给 DreamZero policy server 的任务指令；不填时会根据 `--scene` 使用默认指令
-- `--host` / `--port`：可选的 DreamZero policy server 地址和端口；默认是 `localhost:6000`，与原版 DreamZero evaluator 保持一致
+- `--host` / `--port`：可选的 DreamZero policy server 地址和端口；不填时 D2A 会读取当前配置的 DreamZero `eval_utils/run_sim_eval.py` 里的默认值
 - `--output-root`：输出目录；默认使用 `config_d2a.yaml` 里的 `output_root`
 - `--keyframes`：AHA 网格图采样的时间列数量
 - `--max-steps`：可选的单个 episode 最大步数；不填时使用环境默认 episode 长度

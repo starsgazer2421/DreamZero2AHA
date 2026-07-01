@@ -8,6 +8,7 @@ DreamZero2AHA.
 from __future__ import annotations
 
 import argparse
+import inspect
 import os
 import sys
 from datetime import datetime
@@ -35,7 +36,7 @@ for path in (DREAMZERO_ROOT, EVAL_UTILS_ROOT, SIM_EVALS_SRC):
     if path_text not in sys.path:
         sys.path.insert(0, path_text)
 
-from eval_utils.run_sim_eval import DreamZeroJointPosClient
+from eval_utils import run_sim_eval as dreamzero_run_sim_eval
 from aha_failure_attribution_plugin_d2a import make_aha_failure_attribution_plugin
 from make_json_prompt_d2a import build_aha_request, build_failure_prompt, write_aha_request_json
 from process_data_grid_d2a import build_aha_grid
@@ -43,6 +44,15 @@ from report_eval_metrics_d2a import append_episode_jsonl
 from schemas_d2a import EpisodeResult
 from success_checkers_droid_environment_d2a import check_scene_success
 from trajectory_recorder_run_sim_eval_d2a import DreamZero2AHATrajectoryRecorder, extract_views_from_obs
+
+DreamZeroJointPosClient = dreamzero_run_sim_eval.DreamZeroJointPosClient
+
+
+def dreamzero_main_default(name: str, fallback):
+    parameter = inspect.signature(dreamzero_run_sim_eval.main).parameters.get(name)
+    if parameter is None or parameter.default is inspect.Parameter.empty:
+        return fallback
+    return parameter.default
 
 
 def instruction_for_scene(scene: int) -> str:
@@ -62,8 +72,8 @@ def main(
     scene: int = 1,
     prompt: str | None = None,
     headless: bool = True,
-    host: str = "localhost",
-    port: int = 6000,
+    host: str | None = None,
+    port: int | None = None,
     device: str = "cuda:0",
     output_root: str | None = None,
     keyframes: int = 12,
@@ -96,7 +106,10 @@ def main(
     env_cfg.set_scene(scene)
     env = gym.make("DROID", cfg=env_cfg)
 
-    client = DreamZeroJointPosClient(remote_host=host, remote_port=port)
+    resolved_host = host or dreamzero_main_default("host", "localhost")
+    resolved_port = port if port is not None else dreamzero_main_default("port", 6000)
+    print(f"[D2A] Connecting to DreamZero policy server at {resolved_host}:{resolved_port}")
+    client = DreamZeroJointPosClient(remote_host=resolved_host, remote_port=resolved_port)
     aha_plugin = make_aha_failure_attribution_plugin()
 
     if output_root:

@@ -59,7 +59,7 @@ Useful runner arguments:
 - `--episodes`: number of simulation episodes to run
 - `--scene`: sim-evals DROID scene id; currently `1`, `2`, or `3`
 - `--prompt`: task instruction sent to the DreamZero policy server; if omitted, a default prompt is selected from `--scene`
-- `--host` / `--port`: optional DreamZero policy server address; defaults to `localhost:6000`, matching the original DreamZero evaluator
+- `--host` / `--port`: optional DreamZero policy server address; when omitted, D2A reads the defaults from the configured DreamZero `eval_utils/run_sim_eval.py`
 - `--output-root`: output directory; defaults to `output_root` in `config_d2a.yaml`
 - `--keyframes`: number of temporal columns sampled into the AHA grid
 - `--max-steps`: optional per-episode step cap; defaults to the environment max episode length

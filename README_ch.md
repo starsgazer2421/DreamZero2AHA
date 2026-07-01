@@ -8,10 +8,10 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来从 DreamZero 仿真 
 2. rollout 会被记录，但不做自动成功/失败判定。
 3. episode 被转换成 AHA 风格的多视角时间网格图。
 4. 网格图和 prompt 被保存成 AHA 风格的离线评测样本。
-5. 成功标签由人工确认，失败归因由 AHA 风格网格图自动生成。
+5. 用户查看输出视频后，手动编辑 `episode_results.json`，把 `success` 从 `"unknown"` 改为 `true` 或 `false`。
 6. 结果写入 JSON 文件，供后续分析使用。
 
-当前失败归因来源：rollout runner 不会直接执行 AHA 仓库代码。它会导出 AHA 风格证据（`aha_grid.jpg` 和 `aha_request.json`），然后由 `annotate_failure_d2a.py` 只向用户询问 episode 级别的 `success`。如果 episode 没有被标为成功，脚本会把网格图和 AHA 风格 prompt 发送给 VLM，自动估计 `task_progress`、`failure_type`、`failure_reason` 和视觉证据。`aha_root` 配置项作为可选路径保留，用于说明来源和后续接入 AHA 原生脚本；当前运行 DreamZero rollout 时不依赖它。
+当前失败归因来源：rollout runner 不会直接执行 AHA 仓库代码。它会导出 AHA 风格证据（`aha_grid.jpg` 和 `aha_request.json`）。用户手动编辑 `episode_results.json` 里的 `success` 后，`annotate_failure_d2a.py` 会处理所有结果：成功 episode 的 `failure_type` 和 `failure_reason` 记为 `null`；失败 episode 会把 AHA 风格网格图和 prompt 发送给 VLM，自动生成 `failure_type`、`failure_reason` 和视觉证据。`task_progress` 暂时不实现。
 
 ## 流程图
 
@@ -27,7 +27,7 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来从 DreamZero 仿真 
 - `trajectory_recorder_run_sim_eval_d2a.py`：DreamZero rollout 的相机和动作记录器
 - `process_data_grid_d2a.py`：参考 AHA `process_data.py` 的网格图生成器
 - `make_json_prompt_d2a.py`：参考 AHA `make_json.py` 的对话 JSON 生成器
-- `annotate_failure_d2a.py`：离线工具，人工只记录成功状态，失败归因由 VLM 自动生成
+- `annotate_failure_d2a.py`：离线工具，读取人工编辑好的 success 标签，并对失败 episode 自动做 VLM 归因
 - `report_eval_metrics_d2a.py`：JSON 结果和汇总工具
 - `schemas_d2a.py`：共享数据结构，定义 step 记录和 episode 结果
 
@@ -92,15 +92,15 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
 }
 ```
 
-当前关闭自动成功判定，每个 episode 的 `success` 都写为 `"unknown"`。task progress 相关字段先预留，当前还不会输出。
+当前关闭自动成功判定，每个 episode 的 `success` 都写为 `"unknown"`。`task_progress` 相关字段先预留，当前还不会输出。
 
-rollout 结束后，可以离线标注 episode：
+rollout 结束后，先查看视频并手动编辑 `episode_results.json`，确保每个 `success` 都是 `true` 或 `false`。然后运行失败归因：
 
 ```bash
-python annotate_failure_d2a.py --results output/.../episode_results.json --open-artifacts
+python annotate_failure_d2a.py --results output/.../episode_results.json
 ```
 
-这个脚本只会询问 `success`。对于失败、模糊或未知的 episode，它默认调用 OpenAI 视觉模型，自动写入 `task_progress`、`failure_type`、`failure_reason` 和 `evidence_text` 字段。运行前需要设置 `OPENAI_API_KEY`，也可以指定模型：
+对于 `success=true`，脚本会写入空的失败字段；对于 `success=false`，它默认调用 OpenAI 视觉模型，自动写入 `failure_type`、`failure_reason` 和 `evidence_text` 字段。运行前需要设置 `OPENAI_API_KEY`，也可以指定模型：
 
 ```bash
 set OPENAI_API_KEY=...

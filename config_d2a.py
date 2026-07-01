@@ -49,8 +49,8 @@ def load_d2a_config(config_path: str | Path | None = None) -> D2AConfig:
 
     data = _parse_simple_yaml(path)
     base_dir = path.parent
-    dreamzero_root = _resolve_path(data.get("dreamzero_root", "../dreamzero"), base_dir=base_dir)
-    aha_root = _resolve_path(data.get("aha_root", "../AHA"), base_dir=base_dir)
+    dreamzero_root = _resolve_path(data.get("dreamzero_root", "../DreamZero/dreamzero"), base_dir=base_dir)
+    aha_root = _resolve_path(data.get("aha_root", "../DreamZero/AHA"), base_dir=base_dir)
     output_root = Path(data.get("output_root", "output")).expanduser()
     if output_root.is_absolute():
         resolved_output_root = output_root

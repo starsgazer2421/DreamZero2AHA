@@ -35,8 +35,8 @@ DreamZero2AHA 是一个非侵入式适配子工程，用来把 DreamZero 仿真 
 先检查 `config_d2a.yaml`：
 
 ```yaml
-dreamzero_root: ../dreamzero
-aha_root: ../AHA
+dreamzero_root: ../DreamZero/dreamzero
+aha_root: ../DreamZero/AHA
 output_root: output
 ```
 
@@ -93,4 +93,4 @@ runner 会读取 `config_d2a.yaml`，把配置中的 DreamZero 根目录、`eval
 
 ## 项目修改日志
 
-- **2026-07-01**：创建代码仓库，完成第一版代码撰写，初步实现 D2A 格式适配。未在主流程实现 AHA 失败归因逻辑，未 demo 测试，未 debug，未设置 task progress。
+- **2026-06-30**：创建代码仓库，完成第一版代码撰写，初步实现 D2A 格式适配。未在主流程实现 AHA 失败归因逻辑，未 demo 测试，未 debug，未设置 task progress。

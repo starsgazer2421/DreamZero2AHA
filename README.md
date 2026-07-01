@@ -35,8 +35,8 @@ This project provides derivative adapter files whose names preserve the source c
 Check `config_d2a.yaml` first:
 
 ```yaml
-dreamzero_root: ../dreamzero
-aha_root: ../AHA
+dreamzero_root: ../DreamZero/dreamzero
+aha_root: ../DreamZero/AHA
 output_root: output
 ```
 
@@ -93,4 +93,5 @@ Automatic success checking is disabled. Each episode is written with `"success":
 
 ## Project Changelog
 
-- **2026-07-01**: Created the code repository, completed the first draft of the code, and initially implemented D2A format adaptation. AHA failure attribution is not implemented in the main pipeline yet. Demo testing, debugging, and task progress setup have not been completed.
+- **2026-06-30**: Created the code repository, completed the first draft of the code, and initially implemented D2A format adaptation. AHA failure attribution is not implemented in the main pipeline yet. Demo testing, debugging, and task progress setup have not been completed.
+

@@ -11,7 +11,7 @@ import argparse
 import inspect
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import cv2
@@ -22,6 +22,7 @@ import tyro
 from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+BEIJING_TZ = timezone(timedelta(hours=8), name="Asia/Shanghai")
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -118,7 +119,8 @@ def main(
         output_base = output_base.resolve()
     else:
         output_base = D2A_CONFIG.output_root
-    run_dir = output_base / datetime.now().strftime("%Y-%m-%d") / datetime.now().strftime("%H-%M-%S")
+    run_started_at = datetime.now(BEIJING_TZ)
+    run_dir = output_base / run_started_at.strftime("%Y-%m-%d") / run_started_at.strftime("%H-%M-%S")
     run_dir.mkdir(parents=True, exist_ok=True)
     results_path = run_dir / "episode_results.jsonl"
     episode_max_steps = max_steps or env.env.max_episode_length

@@ -148,10 +148,11 @@ def main(
 
                 action = torch.tensor(ret["action"])[None]
                 obs, _, term, trunc, _ = env.step(action)
-                final_success, final_probe = success_now, probe
                 if success_now:
-                    end_reason = "success"
-                    break
+                    final_success = True
+                    final_probe = probe
+                elif not final_success:
+                    final_probe = probe
                 if term or trunc:
                     end_reason = "terminated" if term else "truncated"
                     break

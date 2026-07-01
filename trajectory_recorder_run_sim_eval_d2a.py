@@ -45,6 +45,7 @@ class DreamZero2AHATrajectoryRecorder:
         self.frames_dir = self.episode_dir / "frames"
         self.frames_dir.mkdir(parents=True, exist_ok=True)
         self.records: list[StepRecord] = []
+        self._views_by_step: list[dict[str, np.ndarray]] = []
 
     def record_step(
         self,
@@ -53,14 +54,12 @@ class DreamZero2AHATrajectoryRecorder:
         action: Any | None = None,
         success_probe: dict[str, Any] | None = None,
     ) -> StepRecord:
-        image_paths: dict[str, str] = {}
+        cached_views: dict[str, np.ndarray] = {}
         for view_name in VIEW_ORDER:
             if view_name not in views:
                 continue
             arr = _as_uint8_image(views[view_name])
-            out_path = self.frames_dir / f"{view_name}_{step_index:04d}.png"
-            Image.fromarray(arr).save(out_path)
-            image_paths[view_name] = str(out_path)
+            cached_views[view_name] = arr
 
         action_list = None
         if action is not None:
@@ -70,12 +69,33 @@ class DreamZero2AHATrajectoryRecorder:
 
         record = StepRecord(
             step_index=step_index,
-            image_paths=image_paths,
+            image_paths={},
             action=action_list,
             success_probe=success_probe or {},
         )
         self.records.append(record)
+        self._views_by_step.append(cached_views)
         return record
+
+    def write_frames(self, indices: list[int] | None = None) -> None:
+        """Persist selected camera frames and update each record's image paths."""
+
+        if indices is None:
+            indices = list(range(len(self.records)))
+        for record_index in indices:
+            if record_index < 0 or record_index >= len(self.records):
+                continue
+            record = self.records[record_index]
+            views = self._views_by_step[record_index]
+            image_paths: dict[str, str] = {}
+            for view_name in VIEW_ORDER:
+                arr = views.get(view_name)
+                if arr is None:
+                    continue
+                out_path = self.frames_dir / f"{view_name}_{record.step_index:04d}.png"
+                Image.fromarray(arr).save(out_path)
+                image_paths[view_name] = str(out_path)
+            record.image_paths = image_paths
 
     def write_steps_json(self) -> Path:
         out_path = self.episode_dir / "steps.json"

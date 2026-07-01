@@ -40,7 +40,7 @@ for path in (DREAMZERO_ROOT, EVAL_UTILS_ROOT, SIM_EVALS_SRC):
 from eval_utils import run_sim_eval as dreamzero_run_sim_eval
 from aha_failure_attribution_plugin_d2a import make_aha_failure_attribution_plugin
 from make_json_prompt_d2a import build_aha_request, build_failure_prompt, write_aha_request_json
-from process_data_grid_d2a import build_aha_grid
+from process_data_grid_d2a import build_aha_grid, sample_indices
 from report_eval_metrics_d2a import append_episode_jsonl
 from schemas_d2a import EpisodeResult
 from success_checkers_droid_environment_d2a import check_scene_success
@@ -157,7 +157,6 @@ def main(
                     break
 
             client.reset()
-            recorder.write_steps_json()
             video_path = episode_dir / f"episode_{ep}.mp4"
             mediapy.write_video(video_path, video, fps=video_fps)
 
@@ -165,6 +164,8 @@ def main(
             request_path = None
             attribution = None
             if not final_success:
+                sampled_frame_indices = sample_indices(len(recorder.records), keyframes)
+                recorder.write_frames(sampled_frame_indices)
                 grid_path = build_aha_grid(recorder.records, episode_dir / f"episode_{ep}_aha_grid.jpg", keyframes=keyframes)
                 request = build_aha_request(
                     request_id=f"scene{scene}_episode{ep}",
@@ -181,6 +182,7 @@ def main(
                         request_json=request_path,
                     )
 
+            recorder.write_steps_json()
             result = EpisodeResult(
                 episode=ep,
                 scene=scene,

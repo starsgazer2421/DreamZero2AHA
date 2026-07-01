@@ -52,8 +52,12 @@ def build_aha_grid(
 
     for col, record_index in enumerate(indices):
         record = records[record_index]
-        image_paths = getattr(record, "image_paths", record.get("image_paths"))
-        step_index = getattr(record, "step_index", record.get("step_index"))
+        if isinstance(record, dict):
+            image_paths = record.get("image_paths", {})
+            step_index = record.get("step_index", record_index)
+        else:
+            image_paths = getattr(record, "image_paths", {})
+            step_index = getattr(record, "step_index", record_index)
         for row, view_name in enumerate(view_order):
             x = col * cell_size[0]
             y = row * cell_size[1]

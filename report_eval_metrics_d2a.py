@@ -10,11 +10,26 @@ from typing import Iterable
 from schemas_d2a import EpisodeResult
 
 
+def _write_readable_results(jsonl_path: Path) -> Path:
+    readable_path = jsonl_path.with_name(f"{jsonl_path.stem}_readable.json")
+    rows = []
+    with jsonl_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
+    with readable_path.open("w", encoding="utf-8") as f:
+        json.dump(rows, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    return readable_path
+
+
 def append_episode_jsonl(result: EpisodeResult, output_path: str | Path) -> Path:
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(result.to_dict(), ensure_ascii=False) + "\n")
+    _write_readable_results(output_path)
     return output_path
 
 

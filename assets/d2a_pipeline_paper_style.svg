@@ -107,8 +107,8 @@
   <text class="code" x="805" y="767">make_json_prompt_d2a.py</text>
 
   <rect class="dash-red" x="1085" y="630" width="255" height="165" rx="12"/>
-  <text class="box-title-red" x="1122" y="682">Offline Failure</text>
-  <text class="box-title-red" x="1148" y="714">Annotation</text>
+  <text class="box-title-red" x="1138" y="682">VLM Failure</text>
+  <text class="box-title-red" x="1142" y="714">Attribution</text>
   <line x1="1115" y1="735" x2="1310" y2="735" stroke="#b91c1c" stroke-width="1.4"/>
   <text class="code" x="1122" y="767">annotate_failure_d2a.py</text>
 

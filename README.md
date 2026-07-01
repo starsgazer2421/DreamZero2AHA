@@ -8,10 +8,10 @@ The key idea is:
 2. Rollouts are recorded without automatic success/failure judgment.
 3. Episodes are converted into AHA-style multi-view temporal grids.
 4. The grid and prompt are saved as AHA-ready evaluation artifacts.
-5. Failure labels are added later with an offline annotation pass.
+5. Success labels are added manually, while failure attribution is generated automatically from the AHA-style grid.
 6. Results are written as JSON files for analysis.
 
-Current attribution source: the rollout runner does not execute AHA code directly. It exports AHA-style evidence (`aha_grid.jpg` and `aha_request.json`), then `annotate_failure_d2a.py` records offline labels for success, task progress, and failure type. The `aha_root` config entry is kept as an optional pointer for provenance and future AHA/VLM attribution scripts, but it is not required to run DreamZero rollouts.
+Current attribution source: the rollout runner does not execute AHA code directly. It exports AHA-style evidence (`aha_grid.jpg` and `aha_request.json`), then `annotate_failure_d2a.py` asks the user only for the episode-level success label. If the episode is not marked successful, the script sends the grid and AHA-style prompt to a VLM to automatically estimate `task_progress`, `failure_type`, `failure_reason`, and visual evidence. The `aha_root` config entry is kept as an optional pointer for provenance and future AHA-native scripts, but it is not required to run DreamZero rollouts.
 
 ## Pipeline
 
@@ -27,7 +27,7 @@ This project provides derivative adapter files whose names preserve the source c
 - `trajectory_recorder_run_sim_eval_d2a.py`: camera/action recorder for DreamZero rollouts
 - `process_data_grid_d2a.py`: AHA-style grid builder inspired by AHA `process_data.py`
 - `make_json_prompt_d2a.py`: AHA conversation JSON builder inspired by AHA `make_json.py`
-- `annotate_failure_d2a.py`: offline interactive annotation helper for success, task progress, and failure type
+- `annotate_failure_d2a.py`: offline helper that manually records success and automatically attributes failures with a VLM
 - `report_eval_metrics_d2a.py`: JSON result and summary helpers
 - `schemas_d2a.py`: shared dataclasses for step records and episode results
 
@@ -99,6 +99,15 @@ After the rollout finishes, annotate episodes offline:
 ```bash
 python annotate_failure_d2a.py --results output/.../episode_results.json --open-artifacts
 ```
+
+This script only asks for `success`. For failed, ambiguous, or unknown episodes, it calls an OpenAI vision model by default and writes automatic `task_progress`, `failure_type`, `failure_reason`, and `evidence_text` fields. Set `OPENAI_API_KEY` before running it, and optionally override the model:
+
+```bash
+set OPENAI_API_KEY=...
+python annotate_failure_d2a.py --results output/.../episode_results.json --attribution-model gpt-5.5
+```
+
+Use `--no-auto-attribution` only when you want to defer automatic failure attribution.
 
 ## Project Changelog
 

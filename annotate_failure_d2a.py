@@ -1,14 +1,16 @@
-"""Interactive offline failure annotation for DreamZero2AHA episodes."""
+"""Manual success labeling plus automatic VLM failure attribution."""
 
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+import mimetypes
 import os
 from pathlib import Path
 from typing import Any
 
-from make_json_prompt_d2a import FAILURE_TYPES
+from make_json_prompt_d2a import FAILURE_TYPES, build_failure_prompt
 
 
 SUCCESS_CHOICES = {
@@ -30,7 +32,7 @@ SUCCESS_CHOICES = {
 def read_json_list(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         raise FileNotFoundError(path)
-    with path.open("r", encoding="utf-8") as f:
+    with path.open("r", encoding="utf-8-sig") as f:
         data = json.load(f)
     if not isinstance(data, list):
         raise ValueError(f"Expected a JSON list in {path}")
@@ -68,37 +70,6 @@ def prompt_choice(prompt: str, choices: dict[str, Any], *, default: str | None =
         print(f"Please choose one of: {', '.join(choices)}")
 
 
-def prompt_int(prompt: str, *, min_value: int, max_value: int, default: int | None = None) -> int:
-    while True:
-        suffix = f" [{default}]" if default is not None else ""
-        value = input(f"{prompt}{suffix}: ").strip()
-        if not value and default is not None:
-            return default
-        try:
-            number = int(value)
-        except ValueError:
-            print("Please enter an integer.")
-            continue
-        if min_value <= number <= max_value:
-            return number
-        print(f"Please enter a value from {min_value} to {max_value}.")
-
-
-def prompt_failure_type(success: Any, *, default: str | None = None) -> str | None:
-    if success is True:
-        return None
-
-    choices = {str(index + 1): value for index, value in enumerate(FAILURE_TYPES)}
-    choices.update({value: value for value in FAILURE_TYPES})
-    if default and default in FAILURE_TYPES:
-        choices[""] = default
-
-    print("Failure types:")
-    for index, failure_type in enumerate(FAILURE_TYPES, start=1):
-        print(f"  {index}. {failure_type}")
-    return prompt_choice("failure_type", choices, default=default)
-
-
 def resolve_artifact_path(value: str | None, results_path: Path) -> str | None:
     if not value:
         return None
@@ -118,12 +89,162 @@ def open_if_requested(path_text: str | None, *, enabled: bool) -> None:
         print(f"Missing artifact: {path}")
 
 
+def encode_image_data_url(path_text: str) -> str:
+    path = Path(path_text)
+    mime_type = mimetypes.guess_type(path.name)[0] or "image/jpeg"
+    data = base64.b64encode(path.read_bytes()).decode("utf-8")
+    return f"data:{mime_type};base64,{data}"
+
+
+def extract_json_object(text: str) -> dict[str, Any]:
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        stripped = stripped.strip("`")
+        if stripped.lower().startswith("json"):
+            stripped = stripped[4:].strip()
+    try:
+        data = json.loads(stripped)
+    except json.JSONDecodeError:
+        start = stripped.find("{")
+        end = stripped.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise
+        data = json.loads(stripped[start : end + 1])
+    if not isinstance(data, dict):
+        raise ValueError("Attribution model did not return a JSON object.")
+    return data
+
+
+def normalize_progress(value: Any) -> int | None:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return None
+    return max(0, min(4, number))
+
+
+def normalize_failure_type(value: Any) -> str:
+    if isinstance(value, str) and value in FAILURE_TYPES:
+        return value
+    return "unknown"
+
+
+def run_openai_attribution(
+    *,
+    image_path: str,
+    instruction: str,
+    scene: int,
+    model: str,
+) -> dict[str, Any]:
+    from openai import OpenAI
+
+    prompt = (
+        build_failure_prompt(instruction, scene)
+        + "\n\nAlso estimate task_progress as an integer from 0 to 4:\n"
+        + "0 = no meaningful task progress; "
+        + "1 = approaches the relevant object; "
+        + "2 = contacts or grasps the relevant object; "
+        + "3 = transports or aligns the object toward the target relation; "
+        + "4 = completes the requested placement/relation.\n"
+        + "Return only JSON with keys: success, task_progress, failure_type, failure_reason, evidence."
+    )
+    response = OpenAI().responses.create(
+        model=model,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {"type": "input_image", "image_url": encode_image_data_url(image_path)},
+                ],
+            }
+        ],
+    )
+    data = extract_json_object(response.output_text)
+    return {
+        "task_progress": normalize_progress(data.get("task_progress")),
+        "failure_type": normalize_failure_type(data.get("failure_type")),
+        "failure_reason": str(data.get("failure_reason", "")).strip(),
+        "evidence_text": str(data.get("evidence", "")).strip(),
+        "raw_response": response.output_text,
+        "model": model,
+    }
+
+
+def automatic_attribution(
+    *,
+    success: Any,
+    grid_path: str | None,
+    prompt: str,
+    scene: int,
+    model: str,
+    enabled: bool,
+) -> dict[str, Any]:
+    if success is True:
+        return {
+            "task_progress": 4,
+            "failure_type": None,
+            "failure_reason": None,
+            "evidence_text": "Manually marked as successful.",
+            "attribution_model": None,
+            "attribution_error": None,
+        }
+    if not enabled:
+        return {
+            "task_progress": None,
+            "failure_type": "unknown",
+            "failure_reason": None,
+            "evidence_text": None,
+            "attribution_model": None,
+            "attribution_error": "automatic attribution disabled",
+        }
+    if not grid_path or not Path(grid_path).exists():
+        return {
+            "task_progress": None,
+            "failure_type": "unknown",
+            "failure_reason": None,
+            "evidence_text": None,
+            "attribution_model": model,
+            "attribution_error": f"grid image not found: {grid_path}",
+        }
+
+    print(f"Running automatic failure attribution with {model}...")
+    try:
+        result = run_openai_attribution(
+            image_path=grid_path,
+            instruction=prompt,
+            scene=scene,
+            model=model,
+        )
+    except Exception as exc:
+        return {
+            "task_progress": None,
+            "failure_type": "unknown",
+            "failure_reason": None,
+            "evidence_text": None,
+            "attribution_model": model,
+            "attribution_error": f"{type(exc).__name__}: {exc}",
+        }
+
+    return {
+        "task_progress": result["task_progress"],
+        "failure_type": result["failure_type"],
+        "failure_reason": result["failure_reason"],
+        "evidence_text": result["evidence_text"],
+        "attribution_model": result["model"],
+        "attribution_error": None,
+        "raw_attribution": result["raw_response"],
+    }
+
+
 def build_annotation(
     episode_row: dict[str, Any],
     *,
     results_path: Path,
     previous: dict[str, Any] | None,
     open_artifacts: bool,
+    auto_attribution: bool,
+    attribution_model: str,
 ) -> dict[str, Any] | None:
     episode = episode_row.get("episode")
     scene = episode_row.get("scene")
@@ -168,31 +289,37 @@ def build_annotation(
         SUCCESS_CHOICES,
         default=success_default,
     )
-    progress_default = previous.get("task_progress") if previous else None
-    if not isinstance(progress_default, int):
-        progress_default = None
-    task_progress = prompt_int("task_progress (0-4)", min_value=0, max_value=4, default=progress_default)
-
-    previous_failure_type = previous.get("failure_type") if previous else episode_row.get("failure_type")
-    failure_type = prompt_failure_type(success, default=previous_failure_type)
+    attribution = automatic_attribution(
+        success=success,
+        grid_path=grid_path,
+        prompt=str(prompt),
+        scene=int(scene),
+        model=attribution_model,
+        enabled=auto_attribution,
+    )
     return {
         "scene": scene,
         "prompt": prompt,
         "episode": episode,
         "success": success,
-        "task_progress": task_progress,
-        "failure_type": failure_type,
+        "task_progress": attribution["task_progress"],
+        "failure_type": attribution["failure_type"],
+        "failure_reason": attribution["failure_reason"],
+        "evidence_text": attribution["evidence_text"],
+        "attribution_model": attribution["attribution_model"],
+        "attribution_error": attribution["attribution_error"],
         "evidence": {
             "grid_path": grid_path,
             "video_path": video_path,
             "steps_path": steps_path,
             "aha_request_path": request_path,
         },
+        **({"raw_attribution": attribution["raw_attribution"]} if "raw_attribution" in attribution else {}),
     }
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Interactively annotate DreamZero2AHA failure cases.")
+    parser = argparse.ArgumentParser(description="Manually label success and automatically attribute failures.")
     parser.add_argument("--results", required=True, help="Path to episode_results.json.")
     parser.add_argument("--output", help="Path to write failure_annotations.json.")
     parser.add_argument(
@@ -204,6 +331,16 @@ def main() -> None:
         "--open-artifacts",
         action="store_true",
         help="Open grid images and videos with the system default applications.",
+    )
+    parser.add_argument(
+        "--no-auto-attribution",
+        action="store_true",
+        help="Disable VLM failure attribution and write unknown failure fields.",
+    )
+    parser.add_argument(
+        "--attribution-model",
+        default=os.environ.get("D2A_ATTRIBUTION_MODEL", "gpt-5.5"),
+        help="OpenAI vision model for automatic attribution. Defaults to D2A_ATTRIBUTION_MODEL or gpt-5.5.",
     )
     args = parser.parse_args()
 
@@ -230,6 +367,8 @@ def main() -> None:
                 results_path=results_path,
                 previous=previous,
                 open_artifacts=args.open_artifacts,
+                auto_attribution=not args.no_auto_attribution,
+                attribution_model=args.attribution_model,
             )
             if annotation is None:
                 continue
